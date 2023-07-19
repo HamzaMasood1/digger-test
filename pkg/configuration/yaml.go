@@ -68,8 +68,9 @@ type EnvVarYaml struct {
 }
 
 type GenerateProjectsConfigYaml struct {
-	Include string `yaml:"include"`
-	Exclude string `yaml:"exclude"`
+	Include    string `yaml:"include"`
+	Exclude    string `yaml:"exclude"`
+	Terragrunt bool   `yaml:"terragrunt"`
 }
 
 func (p *ProjectYaml) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -146,6 +147,7 @@ func (s *StepYaml) UnmarshalYAML(value *yaml.Node) error {
 		return nil
 	}
 
+	s.extract(stepMap, "init")
 	s.extract(stepMap, "plan")
 	s.extract(stepMap, "apply")
 
@@ -171,11 +173,13 @@ func (s *StepYaml) extract(stepMap map[string]interface{}, action string) {
 			}
 			s.ExtraArgs = extraArgs
 		} else {
-			if v, ok := stepMap[action].(map[string]interface{})["extra_args"]; ok {
-				for _, v := range v.([]interface{}) {
-					extraArgs = append(extraArgs, v.(string))
+			if stepMap[action] != nil {
+				if v, ok := stepMap[action].(map[string]interface{})["extra_args"]; ok {
+					for _, v := range v.([]interface{}) {
+						extraArgs = append(extraArgs, v.(string))
+					}
+					s.ExtraArgs = extraArgs
 				}
-				s.ExtraArgs = extraArgs
 			}
 		}
 	}
